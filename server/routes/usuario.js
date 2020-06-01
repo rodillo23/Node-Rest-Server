@@ -15,7 +15,7 @@ app.get('/usuario', (req, res) => {
     let limite = req.query.limite || 5
     limite = Number(limite)
 
-    Usuario.find({})
+    Usuario.find({estado : 'true'}, 'nombre email role estado google')
             .skip(desde)
             .limit(limite)
             .exec((err, usuarios) => {
@@ -25,7 +25,7 @@ app.get('/usuario', (req, res) => {
                         err
                     })
                 }
-                Usuario.count((err, total) => {
+                Usuario.count({estado : 'true'}, (err, total) => {
                     res.json({
                         ok : true,
                         usuarios,
@@ -80,8 +80,35 @@ app.put('/usuario/:id' , (req, res) => {
     })
 })
 
-app.delete('/usuario', (req, res) => {
-    res.json('delete usuario')
+app.delete('/usuario/:id', (req, res) => {
+    
+    let id = req.params.id
+    let status = {
+        estado : false
+    }
+
+    Usuario.findByIdAndUpdate(id, status, {new : true, context : 'query'}, (err, usuarioSesion) => {
+        if (err) {
+            if(!usuarioSesion){
+                return res.status(400).json({
+                    ok : false,
+                    message : `El usuario no se encuentra en la BD`
+                })
+            }
+
+            return res.status(400).json({
+                ok : false,
+                message : 'Ocurrio un error al borrar el usuario'
+            })
+        }
+
+        
+
+        res.json({
+            ok : true,
+            usuarioSesion
+        })
+    })
 })
 
 module.exports = app
